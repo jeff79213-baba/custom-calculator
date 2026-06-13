@@ -334,21 +334,22 @@
   .help-trigger:hover .help-tooltip { display: block; }
   .help-tooltip {
     display: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
+    position: fixed;
+    bottom: auto;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     background: #3d2b1a;
     color: #fff;
-    font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    white-space: nowrap;
-    max-width: 260px;
-    white-space: normal;
+    font-size: 14px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    width: 300px;
+    max-width: 85vw;
+    line-height: 1.6;
     font-weight: 400;
-    z-index: 10;
-    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    z-index: 999;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
   }
   .help-tooltip::after {
     content: '';
