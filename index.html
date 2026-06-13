@@ -544,6 +544,7 @@ function loadConfig() {
       return parsed;
     }
   } catch (e) { /* ignore */ }
+  itemIdCounter = DEFAULT_CONFIG.items.length;
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
 
@@ -789,6 +790,7 @@ function uploadConfig(file) {
       cfg.items.forEach((item, i) => {
         if (!item.id) item.id = generateId();
       });
+      itemIdCounter = cfg.items.length;
       saveConfig(cfg);
       showView('viewCalculator');
       renderMainView();
@@ -835,6 +837,7 @@ function bindEvents() {
     if (!confirm('確定要恢復原廠預設值嗎？目前設定將會遺失（建議先下載備份）。')) return;
     localStorage.removeItem('calculatorConfig');
     config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    itemIdCounter = DEFAULT_CONFIG.items.length;
     showView('viewCalculator');
     renderMainView();
   });
