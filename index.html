@@ -8,11 +8,11 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
-    background: #fef7e6;
-    color: #3d2b1a;
+    background: var(--body-bg, #fef7e6);
+    color: var(--text-color, #3d2b1a);
     min-height: 100vh;
     line-height: 1.6;
-    transition: background .3s;
+    transition: background .3s, color .3s;
   }
   .view { display: none; }
   .view.active { display: block; }
@@ -41,7 +41,7 @@
 
   /* ====== MENU ITEMS ====== */
   .menu-item {
-    background: #fff;
+    background: var(--card-bg, #fff);
     border-radius: 14px;
     padding: 18px 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,.08);
@@ -78,12 +78,12 @@
     font-weight: 700;
     min-width: 32px;
     text-align: center;
-    color: #3d2b1a;
+    color: var(--text-color, #3d2b1a);
   }
 
   /* ====== TOTAL CARD ====== */
   .total-card {
-    background: #fff;
+    background: var(--card-bg, #fff);
     border-radius: 14px;
     padding: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,.08);
@@ -164,7 +164,7 @@
   .settings-container h2 {
     font-size: 18px;
     font-weight: 700;
-    color: #3d2b1a;
+    color: var(--text-color, #3d2b1a);
     margin: 24px 0 12px;
     padding-bottom: 6px;
     border-bottom: 2px solid #f0ebe3;
@@ -186,7 +186,8 @@
     border-radius: 8px;
     font-size: 15px;
     font-family: inherit;
-    background: #fff;
+    background: var(--card-bg, #fff);
+    color: var(--text-color, #3d2b1a);
     transition: border-color .2s;
     outline: none;
   }
@@ -207,7 +208,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #fff;
+    background: var(--card-bg, #fff);
     border-radius: 10px;
     padding: 12px;
     box-shadow: 0 1px 6px rgba(0,0,0,.06);
@@ -227,6 +228,8 @@
     border-radius: 6px;
     font-size: 14px;
     font-family: inherit;
+    background: var(--card-bg, #fff);
+    color: var(--text-color, #3d2b1a);
     outline: none;
     min-width: 0;
   }
@@ -234,6 +237,19 @@
   .settings-item-row input.item-name { flex: 2; }
   .settings-item-row input.item-price { flex: 1; max-width: 80px; }
   .settings-item-row input.item-unit { flex: 0 0 60px; }
+  .move-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #ccc;
+    cursor: pointer;
+    padding: 2px 6px;
+    transition: color .2s;
+    line-height: 1;
+  }
+  .move-btn:hover { color: var(--color-header-bg, #e85d2c); }
+  .move-btn:disabled { opacity: .2; cursor: default; }
+  .move-btn:disabled:hover { color: #ccc; }
   .delete-item {
     background: none;
     border: none;
@@ -290,6 +306,40 @@
   .btn-secondary:hover { background: #e5ddd3; }
   .btn-outline { background: #fff; color: var(--color-header-bg, #e85d2c); border: 2px solid var(--color-header-bg, #e85d2c) !important; }
   .btn-outline:hover { background: #fef7e6; }
+  /* Theme selector */
+  .theme-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .theme-card {
+    flex: 1;
+    min-width: 100px;
+    padding: 14px 12px;
+    border: 2px solid #e0d8ce;
+    border-radius: 10px;
+    background: var(--card-bg, #fff);
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    font-family: inherit;
+  }
+  .theme-card:hover { border-color: var(--color-header-bg, #e85d2c); transform: translateY(-2px); }
+  .theme-card .theme-dot {
+    display: inline-block;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    margin-bottom: 6px;
+    border: 2px solid rgba(0,0,0,.1);
+  }
+  .theme-card .theme-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color, #3d2b1a);
+  }
+
   .back-btn {
     display: block;
     background: none;
@@ -308,7 +358,7 @@
   .settings-header-bar h1 {
     font-size: 22px;
     font-weight: 800;
-    color: #3d2b1a;
+    color: var(--text-color, #3d2b1a);
   }
   .settings-header-bar .close-btn {
     background: none; border: none; font-size: 28px;
@@ -460,12 +510,22 @@
     <div id="settingsItems"></div>
     <button class="add-item-btn" id="addItemBtn">＋ 新增品項</button>
 
+    <h2>快速主題</h2>
+    <p style="font-size:13px;color:#999;margin-bottom:10px;">點選主題自動填入顏色設定</p>
+    <div class="theme-selector" id="themeSelector"></div>
+
     <h2>顏色設定</h2>
     <div class="form-row">
+      <div class="form-group">
+        <label for="inputColorBody">頁面背景色</label>
+        <input type="color" id="inputColorBody" value="#fef7e6">
+      </div>
       <div class="form-group">
         <label for="inputColorHeader">頁首底色</label>
         <input type="color" id="inputColorHeader" value="#e85d2c">
       </div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label for="inputColorAccent">強調色（總金額）</label>
         <input type="color" id="inputColorAccent" value="#c73e1d">
@@ -473,6 +533,16 @@
       <div class="form-group">
         <label for="inputColorButton">按鈕顏色</label>
         <input type="color" id="inputColorButton" value="#e85d2c">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputTextColor">文字顏色</label>
+        <input type="color" id="inputTextColor" value="#3d2b1a">
+      </div>
+      <div class="form-group">
+        <label for="inputCardBg">卡片底色</label>
+        <input type="color" id="inputCardBg" value="#ffffff">
       </div>
     </div>
 
@@ -495,6 +565,29 @@
 // ================================================================
 // DEFAULT CONFIG
 // ================================================================
+const THEMES = [
+  {
+    id: "default",
+    name: "經典橘",
+    colors: { bodyBg: "#fef7e6", headerBg: "#e85d2c", accent: "#c73e1d", buttonBg: "#e85d2c", textColor: "#3d2b1a", cardBg: "#fff" }
+  },
+  {
+    id: "dark",
+    name: "酷酷黑",
+    colors: { bodyBg: "#121212", headerBg: "#1a1a2e", accent: "#e94560", buttonBg: "#e94560", textColor: "#e0e0e0", cardBg: "#1e1e1e" }
+  },
+  {
+    id: "pink",
+    name: "粉紅",
+    colors: { bodyBg: "#fce4ec", headerBg: "#f06292", accent: "#c2185b", buttonBg: "#f06292", textColor: "#4a1a2e", cardBg: "#fff" }
+  },
+  {
+    id: "green",
+    name: "蘋果綠",
+    colors: { bodyBg: "#f1f8e9", headerBg: "#8bc34a", accent: "#33691e", buttonBg: "#8bc34a", textColor: "#1b3a0e", cardBg: "#fff" }
+  }
+];
+
 const DEFAULT_CONFIG = {
   title: "店名",
   subtitle: "計算機",
@@ -504,9 +597,12 @@ const DEFAULT_CONFIG = {
   emptyText: "還沒有點餐喔",
   currency: "$",
   colors: {
+    bodyBg: "#fef7e6",
     headerBg: "#e85d2c",
     accent: "#c73e1d",
-    buttonBg: "#e85d2c"
+    buttonBg: "#e85d2c",
+    textColor: "#3d2b1a",
+    cardBg: "#fff"
   },
   items: [
     { id: "item1", name: "湯包", price: 75, unit: "籠" },
@@ -541,6 +637,14 @@ function loadConfig() {
         });
         itemIdCounter = parsed.items.length;
       }
+      // backward compat: fill missing color fields
+      if (!parsed.colors) parsed.colors = {};
+      if (!parsed.colors.bodyBg) parsed.colors.bodyBg = DEFAULT_CONFIG.colors.bodyBg;
+      if (!parsed.colors.textColor) parsed.colors.textColor = DEFAULT_CONFIG.colors.textColor;
+      if (!parsed.colors.headerBg) parsed.colors.headerBg = DEFAULT_CONFIG.colors.headerBg;
+      if (!parsed.colors.accent) parsed.colors.accent = DEFAULT_CONFIG.colors.accent;
+      if (!parsed.colors.buttonBg) parsed.colors.buttonBg = DEFAULT_CONFIG.colors.buttonBg;
+      if (!parsed.colors.cardBg) parsed.colors.cardBg = DEFAULT_CONFIG.colors.cardBg;
       return parsed;
     }
   } catch (e) { /* ignore */ }
@@ -573,6 +677,9 @@ function showView(viewId) {
 // ================================================================
 function applyColors(colors) {
   const root = document.documentElement;
+  root.style.setProperty('--body-bg', colors.bodyBg);
+  root.style.setProperty('--text-color', colors.textColor);
+  root.style.setProperty('--card-bg', colors.cardBg || '#fff');
   root.style.setProperty('--color-header-bg', colors.headerBg);
   root.style.setProperty('--color-accent', colors.accent);
   root.style.setProperty('--color-button', colors.buttonBg);
@@ -670,6 +777,29 @@ function updateTotal() {
 // ================================================================
 // RENDER SETTINGS VIEW
 // ================================================================
+function renderThemeSelector() {
+  const container = document.getElementById('themeSelector');
+  container.innerHTML = '';
+  THEMES.forEach(theme => {
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    const dotColors = [theme.colors.headerBg, theme.colors.accent, theme.colors.bodyBg];
+    card.innerHTML = `
+      <span class="theme-dot" style="background:${theme.colors.headerBg}"></span>
+      <span class="theme-name">${theme.name}</span>
+    `;
+    card.addEventListener('click', function() {
+      document.getElementById('inputColorBody').value = theme.colors.bodyBg;
+      document.getElementById('inputColorHeader').value = theme.colors.headerBg;
+      document.getElementById('inputColorAccent').value = theme.colors.accent;
+      document.getElementById('inputColorButton').value = theme.colors.buttonBg;
+      document.getElementById('inputTextColor').value = theme.colors.textColor;
+      document.getElementById('inputCardBg').value = theme.colors.cardBg || '#fff';
+    });
+    container.appendChild(card);
+  });
+}
+
 function renderSettingsView() {
   // Populate text fields
   document.getElementById('inputTitle').value = config.title;
@@ -681,9 +811,15 @@ function renderSettingsView() {
   document.getElementById('inputCurrency').value = config.currency;
 
   // Colors
+  document.getElementById('inputColorBody').value = config.colors.bodyBg;
   document.getElementById('inputColorHeader').value = config.colors.headerBg;
   document.getElementById('inputColorAccent').value = config.colors.accent;
   document.getElementById('inputColorButton').value = config.colors.buttonBg;
+  document.getElementById('inputTextColor').value = config.colors.textColor;
+  document.getElementById('inputCardBg').value = config.colors.cardBg || '#fff';
+
+  // Theme selector
+  renderThemeSelector();
 
   // Items
   renderSettingsItems();
@@ -702,10 +838,39 @@ function renderSettingsItems() {
       <input class="item-name" type="text" value="${escapeHtml(item.name)}" placeholder="名稱">
       <input class="item-price" type="number" min="0" step="1" value="${item.price}" placeholder="單價">
       <input class="item-unit" type="text" value="${escapeHtml(item.unit)}" placeholder="單位">
+      <button class="move-btn" data-dir="up" title="上移">↑</button>
+      <button class="move-btn" data-dir="down" title="下移">↓</button>
       <button class="delete-item" title="刪除此品項">✕</button>
     `;
     container.appendChild(row);
 
+    // Disable move buttons at edges
+    const upBtn = row.querySelector('[data-dir="up"]');
+    const downBtn = row.querySelector('[data-dir="down"]');
+    if (idx === 0) upBtn.disabled = true;
+    if (idx === config.items.length - 1) downBtn.disabled = true;
+
+    // Move up
+    upBtn.addEventListener('click', function() {
+      const id = row.dataset.id;
+      const i = config.items.findIndex(item => item.id === id);
+      if (i > 0) {
+        [config.items[i - 1], config.items[i]] = [config.items[i], config.items[i - 1]];
+        renderSettingsItems();
+      }
+    });
+
+    // Move down
+    downBtn.addEventListener('click', function() {
+      const id = row.dataset.id;
+      const i = config.items.findIndex(item => item.id === id);
+      if (i < config.items.length - 1) {
+        [config.items[i], config.items[i + 1]] = [config.items[i + 1], config.items[i]];
+        renderSettingsItems();
+      }
+    });
+
+    // Delete
     row.querySelector('.delete-item').addEventListener('click', function() {
       if (config.items.length <= 1) {
         alert('至少需要一個品項');
@@ -751,9 +916,12 @@ function gatherSettingsFromForm() {
     emptyText: document.getElementById('inputEmptyText').value.trim() || '還沒有點餐喔',
     currency: document.getElementById('inputCurrency').value.trim() || '$',
     colors: {
+      bodyBg: document.getElementById('inputColorBody').value,
       headerBg: document.getElementById('inputColorHeader').value,
       accent: document.getElementById('inputColorAccent').value,
-      buttonBg: document.getElementById('inputColorButton').value
+      buttonBg: document.getElementById('inputColorButton').value,
+      textColor: document.getElementById('inputTextColor').value,
+      cardBg: document.getElementById('inputCardBg').value || '#fff'
     },
     items: items
   };
@@ -786,6 +954,14 @@ function uploadConfig(file) {
         alert('設定檔格式錯誤：缺少 items 陣列');
         return;
       }
+      // backward compat: fill missing color fields
+      if (!cfg.colors) cfg.colors = {};
+      if (!cfg.colors.bodyBg) cfg.colors.bodyBg = DEFAULT_CONFIG.colors.bodyBg;
+      if (!cfg.colors.textColor) cfg.colors.textColor = DEFAULT_CONFIG.colors.textColor;
+      if (!cfg.colors.headerBg) cfg.colors.headerBg = DEFAULT_CONFIG.colors.headerBg;
+      if (!cfg.colors.accent) cfg.colors.accent = DEFAULT_CONFIG.colors.accent;
+      if (!cfg.colors.buttonBg) cfg.colors.buttonBg = DEFAULT_CONFIG.colors.buttonBg;
+      if (!cfg.colors.cardBg) cfg.colors.cardBg = DEFAULT_CONFIG.colors.cardBg;
       // Ensure ids
       cfg.items.forEach((item, i) => {
         if (!item.id) item.id = generateId();
