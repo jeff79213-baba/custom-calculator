@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>自訂計算機</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #fef7e6;
+    color: #3d2b1a;
+    min-height: 100vh;
+    line-height: 1.6;
+    transition: background .3s;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ====== HEADER ====== */
+  .header {
+    background: linear-gradient(135deg, var(--color-header-bg, #e85d2c), var(--color-accent, #c73e1d));
+    color: #fff;
+    padding: 36px 20px 30px;
+    text-align: center;
+    position: relative;
+  }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: 2px; }
+  .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
+  .gear-btn {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; font-size: 28px;
+    cursor: pointer; padding: 8px; line-height: 1;
+    opacity: .85; transition: transform .2s;
+  }
+  .gear-btn:hover { transform: rotate(30deg); opacity: 1; }
+  .gear-btn:active { transform: rotate(60deg); }
+
+  /* ====== CONTAINER ====== */
+  .container { max-width: 420px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  /* ====== MENU ITEMS ====== */
+  .menu-item {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .menu-item .info { display: flex; flex-direction: column; }
+  .menu-item .name { font-size: 17px; font-weight: 700; }
+  .menu-item .price { font-size: 14px; color: var(--color-header-bg, #e85d2c); font-weight: 600; margin-top: 2px; }
+  .qty-control { display: flex; align-items: center; gap: 10px; }
+  .qty-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--color-header-bg, #e85d2c);
+    background: #fff;
+    color: var(--color-header-bg, #e85d2c);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .qty-btn:active { transform: scale(.9); }
+  .qty-btn.minus { border-color: #ccc; color: #999; }
+  .qty-btn.minus.active { border-color: var(--color-header-bg, #e85d2c); color: var(--color-header-bg, #e85d2c); }
+  .qty-num {
+    font-size: 22px;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: center;
+    color: #3d2b1a;
+  }
+
+  /* ====== TOTAL CARD ====== */
+  .total-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    margin-top: 8px;
+    text-align: center;
+  }
+  .total-label { font-size: 14px; color: #888; font-weight: 600; }
+  .total-amount {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--color-accent, #c73e1d);
+    margin: 6px 0;
+  }
+  .total-amount span { font-size: 24px; font-weight: 600; }
+  .order-summary { font-size: 13px; color: #888; margin-top: 6px; }
+  .order-summary span { margin: 0 4px; }
+
+  /* ====== BUTTONS ====== */
+  .reset-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 0;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    background: #f0ebe3;
+    color: #666;
+    letter-spacing: 1px;
+    margin-top: 12px;
+    font-family: inherit;
+  }
+  .reset-btn:active { transform: scale(.97); background: #e5ddd3; }
+
+  /* ====== LOCAL NOTICE ====== */
+  .local-notice {
+    text-align: center;
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 16px;
+    padding: 6px;
+  }
+  .local-notice a { color: #999; cursor: pointer; text-decoration: none; border-bottom: 1px dotted #ccc; }
+
+  /* ====== FOOTER ====== */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 8px;
+    padding-bottom: 20px;
+  }
+
+  /* ============================================================
+     SETTINGS VIEW
+     ============================================================ */
+  .settings-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #664d03;
+    margin-bottom: 24px;
+    line-height: 1.7;
+  }
+  .disclaimer strong { font-weight: 700; }
+
+  .settings-container h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #3d2b1a;
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #f0ebe3;
+  }
+
+  /* Form groups */
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0d8ce;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    transition: border-color .2s;
+    outline: none;
+  }
+  .form-group input:focus { border-color: var(--color-header-bg, #e85d2c); }
+  .form-group input[type="color"] {
+    height: 44px;
+    padding: 4px;
+    cursor: pointer;
+  }
+  .form-row {
+    display: flex;
+    gap: 10px;
+  }
+  .form-row .form-group { flex: 1; }
+
+  /* Settings item rows */
+  .settings-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    margin-bottom: 8px;
+  }
+  .settings-item-row .item-idx {
+    font-size: 13px;
+    font-weight: 700;
+    color: #bbb;
+    min-width: 28px;
+    text-align: center;
+  }
+  .settings-item-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 2px solid #e0d8ce;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    min-width: 0;
+  }
+  .settings-item-row input:focus { border-color: var(--color-header-bg, #e85d2c); }
+  .settings-item-row input.item-name { flex: 2; }
+  .settings-item-row input.item-price { flex: 1; max-width: 80px; }
+  .settings-item-row input.item-unit { flex: 0 0 60px; }
+  .delete-item {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #ccc;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color .2s;
+    line-height: 1;
+  }
+  .delete-item:hover { color: #e85d2c; }
+
+  .add-item-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    background: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #999;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    margin-bottom: 8px;
+  }
+  .add-item-btn:hover { border-color: var(--color-header-bg, #e85d2c); color: var(--color-header-bg, #e85d2c); }
+
+  /* Settings action buttons */
+  .settings-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .settings-actions button, .back-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+    letter-spacing: 0.5px;
+  }
+  .settings-actions button:active { transform: scale(.97); }
+  .btn-primary { background: var(--color-header-bg, #e85d2c); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-secondary { background: #f0ebe3; color: #666; }
+  .btn-secondary:hover { background: #e5ddd3; }
+  .btn-outline { background: #fff; color: var(--color-header-bg, #e85d2c); border: 2px solid var(--color-header-bg, #e85d2c) !important; }
+  .btn-outline:hover { background: #fef7e6; }
+  .back-btn {
+    display: block;
+    background: none;
+    color: #999;
+    text-align: center;
+    margin-top: 16px;
+  }
+  .back-btn:hover { color: #666; }
+
+  .settings-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .settings-header-bar h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #3d2b1a;
+  }
+  .settings-header-bar .close-btn {
+    background: none; border: none; font-size: 28px;
+    cursor: pointer; color: #999; padding: 4px;
+  }
+  .settings-header-bar .close-btn:hover { color: #3d2b1a; }
+
+  /* Help tooltip */
+  .help-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: help;
+    margin-left: 4px;
+    position: relative;
+  }
+  .help-trigger:hover .help-tooltip { display: block; }
+  .help-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3d2b1a;
+    color: #fff;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    max-width: 260px;
+    white-space: normal;
+    font-weight: 400;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  }
+  .help-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #3d2b1a;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .settings-item-row { flex-wrap: wrap; }
+    .settings-item-row input.item-price { max-width: none; flex: 1; }
+    .settings-item-row input.item-unit { flex: 0 0 50px; }
+    .settings-actions button { min-width: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     MAIN CALCULATOR VIEW
+     ============================================================ -->
+<div id="viewCalculator" class="view active">
+  <div class="header" id="mainHeader">
+    <h1 id="mainTitle">載入中...</h1>
+    <p id="mainSubtitle"></p>
+    <button class="gear-btn" id="btnSettings" title="設定">⚙️</button>
+  </div>
+
+  <div class="container">
+    <div id="menuItems"></div>
+
+    <div class="total-card">
+      <div class="total-label" id="totalLabel">總金額</div>
+      <div class="total-amount" id="totalAmount">$0</div>
+      <div class="order-summary" id="orderSummary">還沒有點餐喔</div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">全部歸零</button>
+
+    <div class="local-notice">
+      🔒 所有設定僅儲存於本機瀏覽器
+      <span class="help-trigger" id="helpTrigger">?
+        <span class="help-tooltip">所有資料只存在這個瀏覽器中，不會上傳到任何伺服器，也不會影響其他人。清除瀏覽器資料後設定會遺失，建議在設定頁中下載備份檔。</span>
+      </span>
+    </div>
+
+    <div class="footer" id="mainFooter"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS VIEW
+     ============================================================ -->
+<div id="viewSettings" class="view">
+  <div class="settings-container">
+
+    <div class="settings-header-bar">
+      <h1>⚙️ 設定</h1>
+      <button class="close-btn" id="closeSettings" title="關閉設定">✕</button>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ 所有設定僅儲存在你的瀏覽器</strong>（localStorage）中，<br>
+      不會上傳到任何伺服器，也不會影響其他人看到的畫面。<br>
+      清除瀏覽器快取或更換裝置後設定會遺失，<strong>建議下載設定檔備份</strong>。
+    </div>
+
+    <h2>頁面文字</h2>
+    <div class="form-group">
+      <label for="inputTitle">頁面標題</label>
+      <input type="text" id="inputTitle" placeholder="例如：饕之鄉小籠湯包">
+    </div>
+    <div class="form-group">
+      <label for="inputSubtitle">副標題</label>
+      <input type="text" id="inputSubtitle" placeholder="例如：點餐計算機">
+    </div>
+    <div class="form-group">
+      <label for="inputFooter">頁尾文字</label>
+      <input type="text" id="inputFooter" placeholder="例如：饕之鄉小籠湯包 · 點一點就幫你算好">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputTotalLabel">總金額標籤</label>
+        <input type="text" id="inputTotalLabel" placeholder="總金額">
+      </div>
+      <div class="form-group">
+        <label for="inputResetText">歸零按鈕文字</label>
+        <input type="text" id="inputResetText" placeholder="全部歸零">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputEmptyText">空訂單提示</label>
+        <input type="text" id="inputEmptyText" placeholder="還沒有點餐喔">
+      </div>
+      <div class="form-group">
+        <label for="inputCurrency">幣值符號</label>
+        <input type="text" id="inputCurrency" placeholder="$" maxlength="5">
+      </div>
+    </div>
+
+    <h2>物品設定</h2>
+    <p style="font-size:13px;color:#999;margin-bottom:10px;">設定品項名稱、單價與單位</p>
+    <div id="settingsItems"></div>
+    <button class="add-item-btn" id="addItemBtn">＋ 新增品項</button>
+
+    <h2>顏色設定</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputColorHeader">頁首底色</label>
+        <input type="color" id="inputColorHeader" value="#e85d2c">
+      </div>
+      <div class="form-group">
+        <label for="inputColorAccent">強調色（總金額）</label>
+        <input type="color" id="inputColorAccent" value="#c73e1d">
+      </div>
+      <div class="form-group">
+        <label for="inputColorButton">按鈕顏色</label>
+        <input type="color" id="inputColorButton" value="#e85d2c">
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn-primary" id="saveSettings">💾 儲存設定</button>
+      <button class="btn-secondary" id="resetDefaults">↺ 恢復預設</button>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn-outline" id="downloadConfig">📥 下載設定檔</button>
+      <button class="btn-outline" id="uploadConfig">📤 上傳設定檔</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+    </div>
+
+    <button class="back-btn" id="backToCalculator">← 返回計算機</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// DEFAULT CONFIG
+// ================================================================
+const DEFAULT_CONFIG = {
+  title: "饕之鄉小籠湯包",
+  subtitle: "點餐計算機",
+  footer: "饕之鄉小籠湯包 · 點一點就幫你算好",
+  totalLabel: "總金額",
+  resetText: "全部歸零",
+  emptyText: "還沒有點餐喔",
+  currency: "$",
+  colors: {
+    headerBg: "#e85d2c",
+    accent: "#c73e1d",
+    buttonBg: "#e85d2c"
+  },
+  items: [
+    { id: "item1", name: "湯包", price: 75, unit: "籠" },
+    { id: "item2", name: "紅茶", price: 15, unit: "杯" },
+    { id: "item3", name: "奶茶", price: 20, unit: "杯" }
+  ]
+};
+
+// ================================================================
+// STATE
+// ================================================================
+let config = {};
+let qtys = {};
+let itemIdCounter = 0;
+
+// ================================================================
+// UTILITY
+// ================================================================
+function generateId() {
+  return 'item' + (++itemIdCounter);
+}
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem('calculatorConfig');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // ensure items have ids
+      if (parsed.items) {
+        parsed.items.forEach((item, i) => {
+          if (!item.id) item.id = generateId();
+        });
+        itemIdCounter = parsed.items.length;
+      }
+      return parsed;
+    }
+  } catch (e) { /* ignore */ }
+  return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+
+function saveConfig(cfg) {
+  localStorage.setItem('calculatorConfig', JSON.stringify(cfg));
+  config = cfg;
+}
+
+function resetQtys() {
+  qtys = {};
+  if (config.items) {
+    config.items.forEach(item => { qtys[item.id] = 0; });
+  }
+}
+
+// ================================================================
+// VIEW MANAGEMENT
+// ================================================================
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+}
+
+// ================================================================
+// APPLY COLORS
+// ================================================================
+function applyColors(colors) {
+  const root = document.documentElement;
+  root.style.setProperty('--color-header-bg', colors.headerBg);
+  root.style.setProperty('--color-accent', colors.accent);
+  root.style.setProperty('--color-button', colors.buttonBg);
+}
+
+// ================================================================
+// RENDER MAIN VIEW
+// ================================================================
+function renderMainView() {
+  // Header
+  document.getElementById('mainTitle').textContent = config.title;
+  document.getElementById('mainSubtitle').textContent = config.subtitle;
+  document.getElementById('mainFooter').textContent = config.footer;
+  document.getElementById('totalLabel').textContent = config.totalLabel;
+  document.getElementById('resetBtn').textContent = config.resetText;
+
+  // Colors
+  applyColors(config.colors);
+
+  // Items
+  const container = document.getElementById('menuItems');
+  container.innerHTML = '';
+
+  resetQtys();
+
+  config.items.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'menu-item';
+    div.innerHTML = `
+      <div class="info">
+        <div class="name">${escapeHtml(item.name)}</div>
+        <div class="price">${config.currency}${item.price} / ${escapeHtml(item.unit)}</div>
+      </div>
+      <div class="qty-control">
+        <button class="qty-btn minus" data-id="${item.id}">−</button>
+        <span class="qty-num" id="qty_${item.id}">0</span>
+        <button class="qty-btn plus" data-id="${item.id}">+</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Attach qty events
+  document.querySelectorAll('#menuItems .qty-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      const isPlus = this.classList.contains('plus');
+      if (isPlus) {
+        qtys[id] = (qtys[id] || 0) + 1;
+      } else {
+        if (qtys[id] > 0) qtys[id]--;
+      }
+      updateTotal();
+    });
+  });
+
+  updateTotal();
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ================================================================
+// UPDATE TOTAL
+// ================================================================
+function updateTotal() {
+  // Update displayed quantities
+  config.items.forEach(item => {
+    const el = document.getElementById('qty_' + item.id);
+    if (el) el.textContent = qtys[item.id] || 0;
+  });
+
+  // Calculate total
+  let total = 0;
+  config.items.forEach(item => {
+    total += (qtys[item.id] || 0) * item.price;
+  });
+
+  document.getElementById('totalAmount').innerHTML = config.currency + total;
+
+  // Order summary
+  const parts = [];
+  config.items.forEach(item => {
+    const q = qtys[item.id] || 0;
+    if (q > 0) {
+      parts.push(item.name + ' ' + q + item.unit);
+    }
+  });
+  document.getElementById('orderSummary').textContent = parts.length ? parts.join(' · ') : config.emptyText;
+}
+
+// ================================================================
+// RENDER SETTINGS VIEW
+// ================================================================
+function renderSettingsView() {
+  // Populate text fields
+  document.getElementById('inputTitle').value = config.title;
+  document.getElementById('inputSubtitle').value = config.subtitle;
+  document.getElementById('inputFooter').value = config.footer;
+  document.getElementById('inputTotalLabel').value = config.totalLabel;
+  document.getElementById('inputResetText').value = config.resetText;
+  document.getElementById('inputEmptyText').value = config.emptyText;
+  document.getElementById('inputCurrency').value = config.currency;
+
+  // Colors
+  document.getElementById('inputColorHeader').value = config.colors.headerBg;
+  document.getElementById('inputColorAccent').value = config.colors.accent;
+  document.getElementById('inputColorButton').value = config.colors.buttonBg;
+
+  // Items
+  renderSettingsItems();
+}
+
+function renderSettingsItems() {
+  const container = document.getElementById('settingsItems');
+  container.innerHTML = '';
+
+  config.items.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'settings-item-row';
+    row.dataset.id = item.id;
+    row.innerHTML = `
+      <span class="item-idx">${idx + 1}</span>
+      <input class="item-name" type="text" value="${escapeHtml(item.name)}" placeholder="名稱">
+      <input class="item-price" type="number" min="0" step="1" value="${item.price}" placeholder="單價">
+      <input class="item-unit" type="text" value="${escapeHtml(item.unit)}" placeholder="單位">
+      <button class="delete-item" title="刪除此品項">✕</button>
+    `;
+    container.appendChild(row);
+
+    row.querySelector('.delete-item').addEventListener('click', function() {
+      if (config.items.length <= 1) {
+        alert('至少需要一個品項');
+        return;
+      }
+      const id = row.dataset.id;
+      config.items = config.items.filter(i => i.id !== id);
+      renderSettingsItems();
+    });
+  });
+}
+
+// ================================================================
+// GATHER SETTINGS FROM FORM
+// ================================================================
+function gatherSettingsFromForm() {
+  const items = [];
+  document.querySelectorAll('#settingsItems .settings-item-row').forEach(row => {
+    const name = row.querySelector('.item-name').value.trim();
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    const unit = row.querySelector('.item-unit').value.trim();
+    if (name) {
+      items.push({
+        id: row.dataset.id || generateId(),
+        name: name,
+        price: Math.max(0, price),
+        unit: unit || '份'
+      });
+    }
+  });
+
+  if (items.length === 0) {
+    alert('至少需要一個有效的品項（名稱不能空白）');
+    return null;
+  }
+
+  return {
+    title: document.getElementById('inputTitle').value.trim() || '自訂計算機',
+    subtitle: document.getElementById('inputSubtitle').value.trim(),
+    footer: document.getElementById('inputFooter').value.trim(),
+    totalLabel: document.getElementById('inputTotalLabel').value.trim() || '總金額',
+    resetText: document.getElementById('inputResetText').value.trim() || '全部歸零',
+    emptyText: document.getElementById('inputEmptyText').value.trim() || '還沒有點餐喔',
+    currency: document.getElementById('inputCurrency').value.trim() || '$',
+    colors: {
+      headerBg: document.getElementById('inputColorHeader').value,
+      accent: document.getElementById('inputColorAccent').value,
+      buttonBg: document.getElementById('inputColorButton').value
+    },
+    items: items
+  };
+}
+
+// ================================================================
+// DOWNLOAD / UPLOAD
+// ================================================================
+function downloadConfig() {
+  const cfg = gatherSettingsFromForm();
+  if (!cfg) return;
+
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'calculator-config.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function uploadConfig(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const cfg = JSON.parse(e.target.result);
+      if (!cfg.items || !Array.isArray(cfg.items) || cfg.items.length === 0) {
+        alert('設定檔格式錯誤：缺少 items 陣列');
+        return;
+      }
+      // Ensure ids
+      cfg.items.forEach((item, i) => {
+        if (!item.id) item.id = generateId();
+      });
+      saveConfig(cfg);
+      showView('viewCalculator');
+      renderMainView();
+    } catch (err) {
+      alert('設定檔解析失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ================================================================
+// EVENT BINDING
+// ================================================================
+function bindEvents() {
+  // Settings button
+  document.getElementById('btnSettings').addEventListener('click', function() {
+    renderSettingsView();
+    showView('viewSettings');
+  });
+
+  // Close settings
+  document.getElementById('closeSettings').addEventListener('click', function() {
+    showView('viewCalculator');
+    renderMainView();
+  });
+
+  // Back to calculator
+  document.getElementById('backToCalculator').addEventListener('click', function() {
+    showView('viewCalculator');
+    renderMainView();
+  });
+
+  // Save settings
+  document.getElementById('saveSettings').addEventListener('click', function() {
+    const cfg = gatherSettingsFromForm();
+    if (!cfg) return;
+    saveConfig(cfg);
+    showView('viewCalculator');
+    renderMainView();
+  });
+
+  // Reset defaults
+  document.getElementById('resetDefaults').addEventListener('click', function() {
+    if (!confirm('確定要恢復原廠預設值嗎？目前設定將會遺失（建議先下載備份）。')) return;
+    localStorage.removeItem('calculatorConfig');
+    config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    showView('viewCalculator');
+    renderMainView();
+  });
+
+  // Download
+  document.getElementById('downloadConfig').addEventListener('click', downloadConfig);
+
+  // Upload trigger
+  document.getElementById('uploadConfig').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      uploadConfig(this.files[0]);
+    }
+    this.value = '';
+  });
+
+  // Add item
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    config.items.push({
+      id: generateId(),
+      name: '',
+      price: 0,
+      unit: '份'
+    });
+    renderSettingsItems();
+    // Focus the last row's name input
+    const rows = document.querySelectorAll('#settingsItems .settings-item-row');
+    if (rows.length) {
+      const lastInput = rows[rows.length - 1].querySelector('.item-name');
+      if (lastInput) lastInput.focus();
+    }
+  });
+
+  // Reset button on main view
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    resetQtys();
+    updateTotal();
+  });
+
+  // Help tooltip click for mobile
+  document.getElementById('helpTrigger').addEventListener('click', function(e) {
+    const tooltip = this.querySelector('.help-tooltip');
+    if (tooltip) {
+      const isVisible = tooltip.style.display === 'block';
+      tooltip.style.display = isVisible ? 'none' : 'block';
+      e.stopPropagation();
+    }
+  });
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.help-tooltip').forEach(t => t.style.display = '');
+  });
+}
+
+// ================================================================
+// INIT
+// ================================================================
+function init() {
+  config = loadConfig();
+  bindEvents();
+  renderMainView();
+}
+
+init();
+</script>
+</body>
+</html>
