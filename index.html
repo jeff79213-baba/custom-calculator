@@ -645,6 +645,19 @@ function loadConfig() {
       if (!parsed.colors.accent) parsed.colors.accent = DEFAULT_CONFIG.colors.accent;
       if (!parsed.colors.buttonBg) parsed.colors.buttonBg = DEFAULT_CONFIG.colors.buttonBg;
       if (!parsed.colors.cardBg) parsed.colors.cardBg = DEFAULT_CONFIG.colors.cardBg;
+      // fix duplicate IDs from old bug
+      const usedIds = {};
+      if (parsed.items) {
+        parsed.items.forEach(item => {
+          if (usedIds[item.id]) {
+            item.id = generateId();
+          }
+          usedIds[item.id] = true;
+        });
+        if (Object.keys(usedIds).length > itemIdCounter) {
+          itemIdCounter = Object.keys(usedIds).length;
+        }
+      }
       return parsed;
     }
   } catch (e) { /* ignore */ }
