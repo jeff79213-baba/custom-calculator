@@ -490,6 +490,7 @@
   .sheet-item .item-left { display: flex; align-items: center; gap: 8px; }
   .sheet-item .item-name { font-weight: 500; color: var(--text-color, #3d2b1a); }
   .sheet-item .item-qty { color: #999; font-size: 13px; }
+  .sheet-item .item-price { color: #aaa; font-size: 12px; }
   .sheet-item .item-subtotal { font-weight: 700; color: var(--color-accent, #c73e1d); }
   .sheet-footer {
     padding: 12px 20px 20px;
@@ -920,6 +921,7 @@ function renderOrderDetail() {
       html += '<div class="sheet-item">' +
         '<div class="item-left">' +
           '<span class="item-name">' + escapeHtml(item.name) + '</span>' +
+          '<span class="item-price">' + config.currency + item.price + '</span>' +
           '<span class="item-qty">x ' + q + '</span>' +
         '</div>' +
         '<span class="item-subtotal">' + config.currency + sub + '</span>' +
