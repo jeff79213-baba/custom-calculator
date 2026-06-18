@@ -439,6 +439,67 @@
   }
   .paste-area textarea:focus { border-color: var(--color-header-bg, #e85d2c); }
   .paste-area .paste-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+  /* Bottom sheet overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .bottom-sheet {
+    background: var(--card-bg, #fff);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 420px;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: #ddd; border-radius: 2px;
+    margin: 12px auto 8px;
+    flex-shrink: 0;
+  }
+  .sheet-header { padding: 4px 20px 12px; text-align: center; flex-shrink: 0; }
+  .sheet-header h3 { font-size: 16px; font-weight: 700; color: var(--text-color, #3d2b1a); }
+  .sheet-body {
+    padding: 8px 20px 12px;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheet-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f0ebe3;
+  }
+  .sheet-item:last-child { border-bottom: none; }
+  .sheet-item .item-left { display: flex; align-items: center; gap: 8px; }
+  .sheet-item .item-name { font-weight: 500; color: var(--text-color, #3d2b1a); }
+  .sheet-item .item-qty { color: #999; font-size: 13px; }
+  .sheet-item .item-subtotal { font-weight: 700; color: var(--color-accent, #c73e1d); }
+  .sheet-footer {
+    padding: 12px 20px 20px;
+    border-top: 1px solid #f0ebe3;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .sheet-footer .sheet-total { font-size: 20px; font-weight: 800; color: var(--color-accent, #c73e1d); margin-bottom: 10px; }
+  .sheet-footer .sheet-total .label { font-size: 14px; font-weight: 400; color: #888; }
+  .sheet-footer button { width: 100%; }
 </style>
 </head>
 <body>
@@ -472,6 +533,23 @@
     </div>
 
     <div class="footer" id="mainFooter"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ORDER DETAIL BOTTOM SHEET
+     ============================================================ -->
+<div id="orderDetailOverlay" class="overlay" style="display:none">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>訂單明細</h3>
+    </div>
+    <div class="sheet-body" id="orderDetailBody"></div>
+    <div class="sheet-footer">
+      <div class="sheet-total" id="sheetTotal"><span class="label">總計 </span>$0</div>
+      <button class="btn-primary" id="closeDetailBtn">關閉</button>
+    </div>
   </div>
 </div>
 
@@ -817,6 +895,45 @@ function updateTotal() {
 }
 
 // ================================================================
+// ORDER DETAIL BOTTOM SHEET
+// ================================================================
+function openOrderDetail() {
+  document.getElementById('orderDetailOverlay').style.display = 'flex';
+  renderOrderDetail();
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOrderDetail() {
+  document.getElementById('orderDetailOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderOrderDetail() {
+  const body = document.getElementById('orderDetailBody');
+  let html = '';
+  let total = 0;
+  config.items.forEach(item => {
+    const q = qtys[item.id] || 0;
+    if (q > 0) {
+      const sub = q * item.price;
+      total += sub;
+      html += '<div class="sheet-item">' +
+        '<div class="item-left">' +
+          '<span class="item-name">' + escapeHtml(item.name) + '</span>' +
+          '<span class="item-qty">x ' + q + '</span>' +
+        '</div>' +
+        '<span class="item-subtotal">' + config.currency + sub + '</span>' +
+      '</div>';
+    }
+  });
+  if (!html) {
+    html = '<p style="text-align:center;color:#999;padding:20px 0;">' + config.emptyText + '</p>';
+  }
+  body.innerHTML = html;
+  document.getElementById('sheetTotal').innerHTML = '<span class="label">總計 </span>' + config.currency + total;
+}
+
+// ================================================================
 // RENDER SETTINGS VIEW
 // ================================================================
 function renderThemeSelector() {
@@ -1151,6 +1268,13 @@ function bindEvents() {
     resetQtys();
     updateTotal();
   });
+
+  // Order detail bottom sheet
+  document.getElementById('totalAmount').addEventListener('click', openOrderDetail);
+  document.getElementById('orderDetailOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeOrderDetail();
+  });
+  document.getElementById('closeDetailBtn').addEventListener('click', closeOrderDetail);
 
   // Help tooltip click for mobile
   document.getElementById('helpTrigger').addEventListener('click', function(e) {
