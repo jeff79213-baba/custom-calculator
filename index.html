@@ -88,8 +88,11 @@
     border-radius: 14px;
     padding: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,.08);
-    margin-top: 8px;
+    margin-bottom: 12px;
     text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   .total-label { font-size: 14px; color: #888; font-weight: 600; }
   .total-amount {
@@ -451,13 +454,13 @@
   </div>
 
   <div class="container">
-    <div id="menuItems"></div>
-
     <div class="total-card">
       <div class="total-label" id="totalLabel">總金額</div>
       <div class="total-amount" id="totalAmount">$0</div>
       <div class="order-summary" id="orderSummary">還沒有點餐喔</div>
     </div>
+
+    <div id="menuItems"></div>
 
     <button class="reset-btn" id="resetBtn">全部歸零</button>
 
