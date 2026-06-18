@@ -419,6 +419,23 @@
     .settings-item-row input.item-unit { flex: 0 0 50px; }
     .settings-actions button { min-width: 100px; }
   }
+  .paste-area { margin-top: 12px; }
+  .paste-area textarea {
+    width: 100%;
+    height: 160px;
+    padding: 12px;
+    border: 2px solid #e0d8ce;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: monospace;
+    resize: vertical;
+    outline: none;
+    background: var(--card-bg, #fff);
+    color: var(--text-color, #3d2b1a);
+    box-sizing: border-box;
+  }
+  .paste-area textarea:focus { border-color: var(--color-header-bg, #e85d2c); }
+  .paste-area .paste-actions { display: flex; gap: 10px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -555,7 +572,15 @@
     <div class="settings-actions">
       <button class="btn-outline" id="downloadConfig">📥 下載設定檔</button>
       <button class="btn-outline" id="uploadConfig">📤 上傳設定檔</button>
+      <button class="btn-outline" id="pasteJsonBtn">📋 貼上 JSON</button>
       <input type="file" id="fileInput" accept=".json" style="display:none">
+    </div>
+    <div class="paste-area" id="pasteArea" style="display:none">
+      <textarea id="jsonPasteInput" placeholder="將 JSON 貼在這裡..."></textarea>
+      <div class="paste-actions">
+        <button class="btn-primary" id="importPasteBtn">📥 匯入</button>
+        <button class="btn-secondary" id="cancelPasteBtn">取消</button>
+      </div>
     </div>
 
     <button class="back-btn" id="backToCalculator">← 返回計算機</button>
@@ -959,36 +984,80 @@ function downloadConfig() {
   URL.revokeObjectURL(url);
 }
 
+function normalizeItems(data) {
+  if (Array.isArray(data)) {
+    return data.filter(i => i && i.name);
+  }
+  if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+    return data.items;
+  }
+  const catKey = data.menu_categories ? 'menu_categories' :
+                 data.categories ? 'categories' :
+                 data.category ? 'category' : null;
+  if (catKey && Array.isArray(data[catKey])) {
+    const all = [];
+    for (const cat of data[catKey]) {
+      if (cat.items && Array.isArray(cat.items)) {
+        all.push(...cat.items);
+      }
+    }
+    if (all.length > 0) return all;
+  }
+  for (const key of Object.keys(data)) {
+    if (Array.isArray(data[key]) && data[key].length > 0 && data[key][0] && data[key][0].name) {
+      return data[key];
+    }
+  }
+  return null;
+}
+
+function importConfig(raw) {
+  const items = normalizeItems(raw);
+  if (!items || items.length === 0) {
+    alert('無法辨識 JSON 中的品項資料，請確認格式是否正確。');
+    return false;
+  }
+  const cfg = JSON.parse(JSON.stringify(config));
+  cfg.items = items;
+  if (!cfg.colors) cfg.colors = {};
+  for (const key of ['bodyBg', 'textColor', 'headerBg', 'accent', 'buttonBg', 'cardBg']) {
+    if (!cfg.colors[key]) cfg.colors[key] = DEFAULT_CONFIG.colors[key];
+  }
+  cfg.items.forEach((item, i) => {
+    if (!item.id) item.id = generateId();
+  });
+  itemIdCounter = cfg.items.length;
+  saveConfig(cfg);
+  showView('viewCalculator');
+  renderMainView();
+  return true;
+}
+
 function uploadConfig(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const cfg = JSON.parse(e.target.result);
-      if (!cfg.items || !Array.isArray(cfg.items) || cfg.items.length === 0) {
-        alert('設定檔格式錯誤：缺少 items 陣列');
-        return;
-      }
-      // backward compat: fill missing color fields
-      if (!cfg.colors) cfg.colors = {};
-      if (!cfg.colors.bodyBg) cfg.colors.bodyBg = DEFAULT_CONFIG.colors.bodyBg;
-      if (!cfg.colors.textColor) cfg.colors.textColor = DEFAULT_CONFIG.colors.textColor;
-      if (!cfg.colors.headerBg) cfg.colors.headerBg = DEFAULT_CONFIG.colors.headerBg;
-      if (!cfg.colors.accent) cfg.colors.accent = DEFAULT_CONFIG.colors.accent;
-      if (!cfg.colors.buttonBg) cfg.colors.buttonBg = DEFAULT_CONFIG.colors.buttonBg;
-      if (!cfg.colors.cardBg) cfg.colors.cardBg = DEFAULT_CONFIG.colors.cardBg;
-      // Ensure ids
-      cfg.items.forEach((item, i) => {
-        if (!item.id) item.id = generateId();
-      });
-      itemIdCounter = cfg.items.length;
-      saveConfig(cfg);
-      showView('viewCalculator');
-      renderMainView();
+      const raw = JSON.parse(e.target.result);
+      importConfig(raw);
     } catch (err) {
       alert('設定檔解析失敗：' + err.message);
     }
   };
   reader.readAsText(file);
+}
+
+function pasteConfig() {
+  const text = document.getElementById('jsonPasteInput').value.trim();
+  if (!text) { alert('請先貼上 JSON 內容'); return; }
+  try {
+    const raw = JSON.parse(text);
+    if (importConfig(raw)) {
+      document.getElementById('pasteArea').style.display = 'none';
+      document.getElementById('jsonPasteInput').value = '';
+    }
+  } catch (err) {
+    alert('JSON 解析失敗：' + err.message);
+  }
 }
 
 // ================================================================
@@ -1045,6 +1114,17 @@ function bindEvents() {
     }
     this.value = '';
   });
+
+  // Paste JSON toggle
+  document.getElementById('pasteJsonBtn').addEventListener('click', function() {
+    const area = document.getElementById('pasteArea');
+    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('cancelPasteBtn').addEventListener('click', function() {
+    document.getElementById('pasteArea').style.display = 'none';
+    document.getElementById('jsonPasteInput').value = '';
+  });
+  document.getElementById('importPasteBtn').addEventListener('click', pasteConfig);
 
   // Add item
   document.getElementById('addItemBtn').addEventListener('click', function() {
