@@ -94,7 +94,15 @@
     top: 0;
     z-index: 10;
   }
-  .total-label { font-size: 14px; color: #888; font-weight: 600; }
+  .total-label { font-size: 14px; color: #888; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .copy-detail-btn {
+    background: none; border: none; font-family: inherit;
+    font-size: 12px; font-weight: 600; color: #aaa;
+    cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    transition: all .2s; line-height: 1; white-space: nowrap;
+  }
+  .copy-detail-btn:hover { color: var(--color-accent, #c73e1d); background: rgba(0,0,0,.04); }
+  .copy-detail-btn:active { transform: scale(.95); }
   .total-amount {
     font-size: 48px;
     font-weight: 800;
@@ -572,7 +580,10 @@
 
   <div class="container">
     <div class="total-card">
-      <div class="total-label" id="totalLabel">總金額</div>
+      <div class="total-label" id="totalLabel">
+        <span>總金額</span>
+        <button class="copy-detail-btn" id="copyDetailBtn">📋 複製明細</button>
+      </div>
       <div class="total-amount" id="totalAmount">$0</div>
       <div class="order-summary" id="orderSummary">還沒有點餐喔</div>
     </div>
@@ -1071,6 +1082,30 @@ function handleShareShowQR() {
   document.getElementById('shareQRContainer').style.display = 'block';
 }
 
+function copyOrderDetails() {
+  const lines = [];
+  lines.push('🧾 ' + config.title + ' 訂單明細');
+  lines.push('──────────');
+  let total = 0;
+  let hasItems = false;
+  config.items.forEach(item => {
+    const q = qtys[item.id] || 0;
+    if (q > 0) {
+      hasItems = true;
+      const sub = q * item.price;
+      total += sub;
+      lines.push(escapeHtml(item.name) + ' x ' + q + ' ' + escapeHtml(item.unit) + ' = ' + config.currency + sub);
+    }
+  });
+  if (!hasItems) {
+    alert('目前沒有選取任何品項');
+    return;
+  }
+  lines.push('──────────');
+  lines.push('💰 總計: ' + config.currency + total);
+  copyToClipboard(lines.join('\n'), '📋 明細');
+}
+
 function copyToClipboard(text, label) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function() {
@@ -1450,6 +1485,9 @@ function bindEvents() {
     resetQtys();
     updateTotal();
   });
+
+  // Copy detail
+  document.getElementById('copyDetailBtn').addEventListener('click', copyOrderDetails);
 
   // Order detail bottom sheet
   document.getElementById('totalAmount').addEventListener('click', openOrderDetail);
