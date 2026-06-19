@@ -581,7 +581,7 @@
   <div class="container">
     <div class="total-card">
       <div class="total-label" id="totalLabel">
-        <span>總金額</span>
+        <span id="totalLabelText">總金額</span>
         <button class="copy-detail-btn" id="copyDetailBtn">📋 複製明細</button>
       </div>
       <div class="total-amount" id="totalAmount">$0</div>
@@ -915,7 +915,7 @@ function renderMainView() {
   document.getElementById('mainTitle').textContent = config.title;
   document.getElementById('mainSubtitle').textContent = config.subtitle;
   document.getElementById('mainFooter').textContent = config.footer;
-  document.getElementById('totalLabel').textContent = config.totalLabel;
+  document.getElementById('totalLabelText').textContent = config.totalLabel;
   document.getElementById('resetBtn').textContent = config.resetText;
 
   // Colors
