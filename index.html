@@ -720,7 +720,7 @@
     <div class="settings-actions">
       <button class="btn-outline" id="downloadConfig">📥 下載設定檔</button>
       <button class="btn-outline" id="uploadConfig">📤 上傳設定檔</button>
-      <button class="btn-outline" id="copyConfigBtn">📋 複製設定</button>
+      <button class="btn-outline" id="copyConfigBtn">📤 匯出 JSON</button>
       <input type="file" id="fileInput" accept=".json" style="display:none">
     </div>
     <div class="paste-area" id="pasteArea">
@@ -1453,12 +1453,14 @@ function bindEvents() {
     this.value = '';
   });
 
-  // Copy config to clipboard
+  // Export JSON (fill textarea + copy to clipboard)
   document.getElementById('copyConfigBtn').addEventListener('click', function() {
     const cfg = gatherSettingsFromForm();
     if (!cfg) return;
     const text = JSON.stringify(cfg, null, 2);
-    copyToClipboard(text, '📋 設定');
+    document.getElementById('jsonPasteInput').value = text;
+    document.getElementById('jsonPasteInput').select();
+    copyToClipboard(text, '📤 JSON');
   });
 
   // Clear paste area
