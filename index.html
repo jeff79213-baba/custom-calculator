@@ -720,14 +720,15 @@
     <div class="settings-actions">
       <button class="btn-outline" id="downloadConfig">📥 下載設定檔</button>
       <button class="btn-outline" id="uploadConfig">📤 上傳設定檔</button>
-      <button class="btn-outline" id="pasteJsonBtn">📋 貼上 JSON</button>
+      <button class="btn-outline" id="copyConfigBtn">📋 複製設定</button>
       <input type="file" id="fileInput" accept=".json" style="display:none">
     </div>
-    <div class="paste-area" id="pasteArea" style="display:none">
+    <div class="paste-area" id="pasteArea">
+      <div style="font-size:12px;color:#999;margin-bottom:6px;">📋 從 LINE 複製設定後貼到這裡，按「匯入」即可還原</div>
       <textarea id="jsonPasteInput" placeholder="將 JSON 貼在這裡..."></textarea>
       <div class="paste-actions">
         <button class="btn-primary" id="importPasteBtn">📥 匯入</button>
-        <button class="btn-secondary" id="cancelPasteBtn">取消</button>
+        <button class="btn-secondary" id="cancelPasteBtn">清除</button>
       </div>
     </div>
 
@@ -1452,13 +1453,16 @@ function bindEvents() {
     this.value = '';
   });
 
-  // Paste JSON toggle
-  document.getElementById('pasteJsonBtn').addEventListener('click', function() {
-    const area = document.getElementById('pasteArea');
-    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+  // Copy config to clipboard
+  document.getElementById('copyConfigBtn').addEventListener('click', function() {
+    const cfg = gatherSettingsFromForm();
+    if (!cfg) return;
+    const text = JSON.stringify(cfg, null, 2);
+    copyToClipboard(text, '📋 設定');
   });
+
+  // Clear paste area
   document.getElementById('cancelPasteBtn').addEventListener('click', function() {
-    document.getElementById('pasteArea').style.display = 'none';
     document.getElementById('jsonPasteInput').value = '';
   });
   document.getElementById('importPasteBtn').addEventListener('click', pasteConfig);
